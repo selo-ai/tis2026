@@ -206,11 +206,29 @@ const SalaryCalculator = () => {
                 </div>
               </div>
 
+              {/* Toplu Ödenecek Fark */}
+              <div className="result-highlight mt-4" style={{ background: 'linear-gradient(135deg, hsl(45 90% 50% / 0.1), hsl(35 90% 55% / 0.1))' }}>
+                <div className="text-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/20 rounded-full text-xs font-medium text-yellow-600 dark:text-yellow-400 mb-3">
+                    <span>Toplu Ödenecek Fark</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    4 Aylık Maaş Farkı
+                  </div>
+                  <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {formatCurrency((result.final - result.original) * 225 * 4)} TL
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    ({formatCurrency((result.final - result.original) * 225)} TL × 4 ay)
+                  </div>
+                </div>
+              </div>
+
               {/* Second Period - 6 Month */}
               <div className="result-highlight mt-4" style={{ background: 'linear-gradient(135deg, hsl(160 60% 45% / 0.1), hsl(210 80% 45% / 0.1))' }}>
                 <div className="text-center">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 rounded-full text-xs font-medium text-accent mb-3">
-                    <span>2. Dönem (6 Ay Sonra)</span>
+                    <span>2. Altı Ay (Mart zammı)</span>
                   </div>
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-1">
                     <Percent className="w-3.5 h-3.5" />
