@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Calculator, TrendingUp, Plus, Percent, Share2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { TrendingUp, Plus, Percent, Share2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,6 +7,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CalculationResult {
   original: number;
@@ -27,6 +34,7 @@ interface CalculationResult {
 
 const SalaryCalculator = () => {
   const [hourlyWage, setHourlyWage] = useState<string>("");
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState<boolean>(false);
 
   const result = useMemo<CalculationResult | null>(() => {
     const wage = parseFloat(hourlyWage.replace(",", "."));
@@ -83,68 +91,96 @@ const SalaryCalculator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-xl font-bold text-primary mb-2">
-            Türk Metal Sendikası
-          </h1>
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
-            <Calculator className="w-7 h-7 text-primary" />
+    <>
+      {/* Disclaimer Modal */}
+      <Dialog open={!disclaimerAccepted} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-yellow-500" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl text-center">Önemli Uyarı</DialogTitle>
+            <DialogDescription className="text-center space-y-3 pt-4">
+              <p className="text-base">
+                Bu hesaplama aracı <strong>tahmini değerler</strong> üretmektedir.
+              </p>
+              <p>
+                Hesaplanan tutarlar kesinlik taşımamakta olup, gerçek değerlerle farklılıklar gösterebilir.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Kesin bilgi için lütfen sendika temsilcinize veya işvereninize danışınız.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-4">
+            <Button 
+              onClick={() => setDisclaimerAccepted(true)} 
+              className="w-full sm:w-auto px-8"
+            >
+              Anladım, Devam Et
+            </Button>
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            TİS2026 Zam Hesaplama Aracı
-          </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            Toplu iş sözleşmesi zam miktarını hesaplayın
-          </p>
-          
-          {/* Share Button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Share2 className="w-4 h-4" />
-                Paylaş
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center">
-              <DropdownMenuItem
-                onClick={() => {
-                  const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
-                  const url = window.location.href;
-                  window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank");
-                }}
-              >
-                <span className="text-green-600 mr-2">📱</span> WhatsApp
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
-                  const url = window.location.href;
-                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
-                }}
-              >
-                <span className="mr-2">𝕏</span> X (Twitter)
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  const url = window.location.href;
-                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
-                }}
-              >
-                <span className="text-blue-600 mr-2">📘</span> Facebook
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                }}
-              >
-                <span className="mr-2">📋</span> Linki Kopyala
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              TİS2026 Zam Hesaplama Aracı
+            </h1>
+            <p className="text-muted-foreground text-sm mb-4">
+              Toplu iş sözleşmesi zam miktarını hesaplayın
+            </p>
+            
+            {/* Share Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Hesaplama Aracını Paylaş
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem
+                  onClick={() => {
+                    const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
+                    const url = window.location.href;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank");
+                  }}
+                >
+                  <span className="text-green-600 mr-2">📱</span> WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
+                    const url = window.location.href;
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
+                  }}
+                >
+                  <span className="mr-2">𝕏</span> X (Twitter)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const url = window.location.href;
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+                  }}
+                >
+                  <span className="text-blue-600 mr-2">📘</span> Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                  }}
+                >
+                  <span className="mr-2">📋</span> Linki Kopyala
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
         {/* Calculator Card */}
         <div className="calculator-card">
@@ -337,6 +373,7 @@ const SalaryCalculator = () => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 
