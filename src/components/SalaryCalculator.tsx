@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calculator, TrendingUp, Plus, Percent, AlertTriangle, Share2 } from "lucide-react";
+import { Calculator, TrendingUp, Plus, Percent, AlertTriangle, Share2, Github } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -307,6 +307,26 @@ const SalaryCalculator = () => {
           <p className="text-center text-xs text-muted-foreground mt-6">
             Açıklanan Toplu İş Sözleşmesi şartlarına göre hesaplanmıştır.
           </p>
+          <div className="text-center mt-4">
+            <a
+              href="https://github.com/selo-ai/wage-rise-calculator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Github className="w-4 h-4" />
+              GitHub
+            </a>
+          </div>
+
+          {/* View Counter */}
+          <div className="text-center mt-6">
+            <img
+              src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Ftis2026.netlify.app&count_bg=%232563EB&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=&edge_flat=true"
+              alt="Görüntüleme"
+              className="h-6 opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
         </div>
       </div>
     </>
