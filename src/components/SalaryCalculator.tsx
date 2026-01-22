@@ -1,5 +1,12 @@
 import { useState, useMemo } from "react";
-import { Calculator, TrendingUp, Plus, Percent } from "lucide-react";
+import { Calculator, TrendingUp, Plus, Percent, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CalculationResult {
   original: number;
@@ -80,15 +87,63 @@ const SalaryCalculator = () => {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
+          <h1 className="text-xl font-bold text-primary mb-2">
+            Türk Metal Sendikası
+          </h1>
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
             <Calculator className="w-7 h-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">
-            TİS Zam Hesaplayıcı
-          </h1>
-          <p className="text-muted-foreground text-sm">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            TİS2026 Zam Hesaplama Aracı
+          </h2>
+          <p className="text-muted-foreground text-sm mb-4">
             Toplu iş sözleşmesi zam miktarını hesaplayın
           </p>
+          
+          {/* Share Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Share2 className="w-4 h-4" />
+                Paylaş
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem
+                onClick={() => {
+                  const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
+                  const url = window.location.href;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank");
+                }}
+              >
+                <span className="text-green-600 mr-2">📱</span> WhatsApp
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  const text = "TİS2026 Zam Hesaplama Aracı - Türk Metal Sendikası";
+                  const url = window.location.href;
+                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
+                }}
+              >
+                <span className="mr-2">𝕏</span> X (Twitter)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  const url = window.location.href;
+                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+                }}
+              >
+                <span className="text-blue-600 mr-2">📘</span> Facebook
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                }}
+              >
+                <span className="mr-2">📋</span> Linki Kopyala
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Calculator Card */}
