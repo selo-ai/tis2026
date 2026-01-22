@@ -216,7 +216,9 @@ const SalaryCalculator = () => {
                     </div>
                     <div className="mt-2 text-xs text-muted-foreground">
                       Başlangıçtan toplam artış: %{result.secondPeriodTotalPercentage.toFixed(1)}
-                      Enflasyon oranı %13'ten fazla çıkarsa tutarlar değişecektir.
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Enflasyon oranı %13'ten fazla olursa tutarlar değişecektir.
                     </div>
                   </div>
                 </div>
