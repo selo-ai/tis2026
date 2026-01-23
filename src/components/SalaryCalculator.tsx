@@ -378,9 +378,7 @@ const SalaryCalculator = () => {
             </a>
           </div>
 
-          <div className="text-center mt-8 text-[10px] text-muted-foreground/30 font-mono">
-            v1.3 | Raw: {hourlyWage} | Parsed: {result?.original.toFixed(2) || "N/A"}
-          </div>
+
         </div>
       </div>
     </>
