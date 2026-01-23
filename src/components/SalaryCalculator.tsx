@@ -31,22 +31,42 @@ const SalaryCalculator = () => {
   const [hourlyWage, setHourlyWage] = useState<string>("");
 
   const result = useMemo<CalculationResult | null>(() => {
-    // Robust parsing: handle different keyboard inputs and locales
-    let cleanValue = hourlyWage
-      .replace(/\s/g, '') // Remove all whitespace (including non-breaking spaces)
-      .replace(/[,،٫，﹐﹑·]/g, '.') // Replace various comma/decimal chars with period
-      .replace(/[^\d.]/g, ''); // Keep only digits and periods
+    // Ultra-robust parsing:
+    // 1. Get raw string and remove all whitespace (including unicode spaces)
+    let raw = hourlyWage;
+    let clean = raw.replace(/[\s\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, "");
 
-    // Handle multiple periods (thousand separators)
-    // Keep only the last period as decimal separator
-    const periodCount = (cleanValue.match(/\./g) || []).length;
-    if (periodCount > 1) {
-      const lastPeriodIndex = cleanValue.lastIndexOf('.');
-      cleanValue = cleanValue.substring(0, lastPeriodIndex).replace(/\./g, '') +
-        cleanValue.substring(lastPeriodIndex);
+    let parsedWage = 0;
+
+    // Check if there are ANY non-digit characters in the clean string
+    if (!/[^\d]/.test(clean)) {
+      // Pure integer
+      parsedWage = parseFloat(clean);
+    } else {
+      // Find the Last Non-Digit character index
+      // We iterate backwards to find the separator
+      let lastSepIndex = -1;
+      for (let i = clean.length - 1; i >= 0; i--) {
+        if (/\D/.test(clean[i])) {
+          lastSepIndex = i;
+          break;
+        }
+      }
+
+      if (lastSepIndex !== -1) {
+        // Everything before last sep is integer part (strip non-digits)
+        const integerPart = clean.substring(0, lastSepIndex).replace(/\D/g, "");
+        // Everything after last sep is decimal part (strip non-digits)
+        const decimalPart = clean.substring(lastSepIndex + 1).replace(/\D/g, "");
+
+        parsedWage = parseFloat(`${integerPart}.${decimalPart}`);
+      } else {
+        // Should calculate to integer if loop fails (covered by first check but safe fallback)
+        parsedWage = parseFloat(clean.replace(/\D/g, ""));
+      }
     }
 
-    const wage = parseFloat(cleanValue);
+    const wage = parsedWage;
     if (isNaN(wage) || wage <= 0) return null;
 
     // Step 1: İyileştirme (140 TL altındakilere 10 TL, max 140 TL)
@@ -358,6 +378,9 @@ const SalaryCalculator = () => {
             </a>
           </div>
 
+          <div className="text-center mt-8 text-[10px] text-muted-foreground/30 font-mono">
+            v1.3 | Raw: {hourlyWage} | Parsed: {result?.original.toFixed(2) || "N/A"}
+          </div>
         </div>
       </div>
     </>
@@ -365,4 +388,3 @@ const SalaryCalculator = () => {
 };
 
 export default SalaryCalculator;
- 
