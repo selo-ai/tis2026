@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Calculator, TrendingUp, Plus, Percent, AlertTriangle, Share2, Github } from "lucide-react";
+import { Calculator, TrendingUp, Plus, Percent, AlertTriangle, Share2, Github, Twitter } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,12 @@ interface CalculationResult {
   secondPeriodFinal: number;
   secondPeriodTotalIncrease: number;
   secondPeriodTotalPercentage: number;
+}
+
+interface MarchInflationResult {
+  original: number;
+  marchInflationAmount: number;
+  marchInflationFinal: number;
 }
 
 const SalaryCalculator = () => {
@@ -89,8 +95,8 @@ const SalaryCalculator = () => {
     const totalIncrease = final - wage;
     const totalPercentageIncrease = ((final - wage) / wage) * 100;
 
-    // Second period: %13 increase
-    const secondPeriodIncrease = final * 0.13;
+    // Second period: %16.29 increase
+    const secondPeriodIncrease = final * 0.1629;
     const secondPeriodFinal = final + secondPeriodIncrease;
     const secondPeriodTotalIncrease = secondPeriodFinal - wage;
     const secondPeriodTotalPercentage = ((secondPeriodFinal - wage) / wage) * 100;
@@ -111,6 +117,41 @@ const SalaryCalculator = () => {
       secondPeriodTotalPercentage,
     };
   }, [hourlyWage]);
+
+  const [marchHourlyWage, setMarchHourlyWage] = useState<string>("");
+
+  const marchResult = useMemo<MarchInflationResult | null>(() => {
+    let raw = marchHourlyWage;
+    let clean = raw.replace(/[\s\u00A0\u1680\u180E\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, "");
+
+    let parsedWage = 0;
+    if (!/[^\d]/.test(clean)) {
+      parsedWage = parseFloat(clean);
+    } else {
+      let lastSepIndex = -1;
+      for (let i = clean.length - 1; i >= 0; i--) {
+        if (/\D/.test(clean[i])) {
+          lastSepIndex = i;
+          break;
+        }
+      }
+      if (lastSepIndex !== -1) {
+        const integerPart = clean.substring(0, lastSepIndex).replace(/\D/g, "");
+        const decimalPart = clean.substring(lastSepIndex + 1).replace(/\D/g, "");
+        parsedWage = parseFloat(`${integerPart}.${decimalPart}`);
+      } else {
+        parsedWage = parseFloat(clean.replace(/\D/g, ""));
+      }
+    }
+
+    if (isNaN(parsedWage) || parsedWage <= 0) return null;
+
+    return {
+      original: parsedWage,
+      marchInflationAmount: parsedWage * 0.1629,
+      marchInflationFinal: parsedWage * 1.1629,
+    };
+  }, [marchHourlyWage]);
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString("tr-TR", {
@@ -190,195 +231,269 @@ const SalaryCalculator = () => {
             </button>
           </div>
 
-          {/* Calculator Card */}
-          <div className="calculator-card">
-            {/* Input */}
-            <div className="mb-6">
-              <label htmlFor="wage" className="input-label">
-                Mevcut Saat Ücretiniz
-              </label>
-              <div className="relative">
-                <input
-                  id="wage"
-                  type="text"
-                  inputMode="decimal"
-                  value={hourlyWage}
-                  onChange={(e) => setHourlyWage(e.target.value)}
-                  placeholder="Örn: 125,50"
-                  className="calculator-input pr-12"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">TL</span>
+          {/* Calculator Cards Container */}
+          <div className="space-y-8">
+            {/* 1. İkinci 6 Ay Zam Hesapla (March Inflation) */}
+            <div className="calculator-card border-purple-500/20 shadow-lg shadow-purple-500/5">
+              <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <span className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  🌸
+                </span>
+                İkinci 6 Ay Zam Hesapla
+              </h2>
+
+              <div className="mb-6">
+                <label htmlFor="march-wage" className="input-label">
+                  Mevcut Saat Ücretiniz <span className="text-xs font-normal opacity-70">(TİS2026 Sonrası)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="march-wage"
+                    type="text"
+                    inputMode="decimal"
+                    value={marchHourlyWage}
+                    onChange={(e) => setMarchHourlyWage(e.target.value)}
+                    placeholder="Örn: 125,50"
+                    className="calculator-input pr-12 focus:ring-purple-500/20 focus:border-purple-500"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">TL</span>
+                </div>
               </div>
-              {result && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Eski Maaş:{" "}
-                  <span className="font-semibold text-foreground">{formatCurrency(result.original * 225)} TL</span>{" "}
-                  <span className="text-xs">(×225 saat)</span>
+
+              {marchResult && (
+                <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+                  <div
+                    className="result-highlight"
+                    style={{ background: "linear-gradient(135deg, hsl(280 80% 50% / 0.1), hsl(250 80% 50% / 0.1))" }}
+                  >
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-1">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>%16,29 Mart Enflasyon Zammı</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-1">Yeni Saat Ücretiniz</div>
+                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {formatCurrency(marchResult.marchInflationFinal)} TL
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Artış: +{formatCurrency(marchResult.marchInflationAmount)} TL
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-purple-500/20">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Tahmini Aylık Maaş <span className="text-xs">(×225 saat)</span>
+                        </div>
+                        <div className="text-2xl font-bold text-foreground">
+                          {formatCurrency(marchResult.marchInflationFinal * 225)} TL
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Eski Maaş: {formatCurrency(marchResult.original * 225)} TL
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Results */}
-            {result && (
-              <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
-                {/* Calculation Steps */}
-                <div className="space-y-3">
-                  {/* Step 1 - İyileştirme */}
-                  {result.improvementAmount > 0 && (
+            {/* 2. TİS2026 Zam Hesapla (Original Calculator) */}
+            <div className="calculator-card border-blue-500/20 shadow-lg shadow-blue-500/5">
+              <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <span className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                  <Calculator className="w-5 h-5" />
+                </span>
+                TİS2026 Zam Hesapla
+              </h2>
+
+              {/* Input */}
+              <div className="mb-6">
+                <label htmlFor="wage" className="input-label">
+                  Mevcut Saat Ücretiniz
+                </label>
+                <div className="relative">
+                  <input
+                    id="wage"
+                    type="text"
+                    inputMode="decimal"
+                    value={hourlyWage}
+                    onChange={(e) => setHourlyWage(e.target.value)}
+                    placeholder="Örn: 125,50"
+                    className="calculator-input pr-12 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">TL</span>
+                </div>
+                {result && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Eski Maaş:{" "}
+                    <span className="font-semibold text-foreground">{formatCurrency(result.original * 225)} TL</span>{" "}
+                    <span className="text-xs">(×225 saat)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Results */}
+              {result && (
+                <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+                  {/* Calculation Steps */}
+                  <div className="space-y-3">
+                    {/* Step 1 - İyileştirme */}
+                    {result.improvementAmount > 0 && (
+                      <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl">
+                        <div className="step-badge">1</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>İyileştirme</span>
+                          </div>
+                          <div className="font-semibold text-foreground">
+                            +{formatCurrency(result.improvementAmount)} TL → {formatCurrency(result.afterImprovement)} TL
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2 - %20 Zam */}
                     <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl">
-                      <div className="step-badge">1</div>
+                      <div className="step-badge">{result.improvementAmount > 0 ? "2" : "1"}</div>
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>İyileştirme</span>
+                          <Percent className="w-3.5 h-3.5" />
+                          <span>%20 Zam</span>
                         </div>
                         <div className="font-semibold text-foreground">
-                          +{formatCurrency(result.improvementAmount)} TL → {formatCurrency(result.afterImprovement)} TL
+                          +{formatCurrency(result.percentageAmount)} TL → {formatCurrency(result.afterPercentage)} TL
                         </div>
                       </div>
                     </div>
-                  )}
 
-                  {/* Step 2 - %20 Zam */}
-                  <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl">
-                    <div className="step-badge">{result.improvementAmount > 0 ? "2" : "1"}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                        <Percent className="w-3.5 h-3.5" />
-                        <span>%20 Zam</span>
-                      </div>
-                      <div className="font-semibold text-foreground">
-                        +{formatCurrency(result.percentageAmount)} TL → {formatCurrency(result.afterPercentage)} TL
+                    {/* Step 3 - Seyyanen */}
+                    <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl">
+                      <div className="step-badge">{result.improvementAmount > 0 ? "3" : "2"}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>Seyyanen Artış</span>
+                        </div>
+                        <div className="font-semibold text-foreground">+{formatCurrency(result.flatIncrease)} TL</div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Step 3 - Seyyanen */}
-                  <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-xl">
-                    <div className="step-badge">{result.improvementAmount > 0 ? "3" : "2"}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>Seyyanen Artış</span>
-                      </div>
-                      <div className="font-semibold text-foreground">+{formatCurrency(result.flatIncrease)} TL</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Final Result */}
-                <div className="result-highlight mt-4">
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground mb-1">Yeni Saat Ücretiniz</div>
-                    <div className="text-3xl font-bold text-primary">{formatCurrency(result.final)} TL</div>
-                    <div className="mt-2 text-sm text-accent font-medium">
-                      Toplam artış: +{formatCurrency(result.totalIncrease)} TL
-                      <span className="text-muted-foreground"> (</span>%{result.totalPercentageIncrease.toFixed(1)}
-                      <span className="text-muted-foreground">)</span>
-                    </div>
-
-                    {/* Monthly Salary */}
-                    <div className="mt-4 pt-4 border-t border-primary/20">
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Tahmini Aylık Maaş <span className="text-xs">(×225 saat)</span>
-                      </div>
-                      <div className="text-2xl font-bold text-foreground">{formatCurrency(result.final * 225)} TL</div>
+                  {/* Final Result */}
+                  <div className="result-highlight mt-4">
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground mb-1">Yeni Saat Ücretiniz</div>
+                      <div className="text-3xl font-bold text-primary">{formatCurrency(result.final)} TL</div>
                       <div className="mt-2 text-sm text-accent font-medium">
-                        Fark: +{formatCurrency((result.final - result.original) * 225)} TL
+                        Toplam artış: +{formatCurrency(result.totalIncrease)} TL
+                        <span className="text-muted-foreground"> (</span>%{result.totalPercentageIncrease.toFixed(1)}
+                        <span className="text-muted-foreground">)</span>
+                      </div>
+
+                      {/* Monthly Salary */}
+                      <div className="mt-4 pt-4 border-t border-primary/20">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Tahmini Aylık Maaş <span className="text-xs">(×225 saat)</span>
+                        </div>
+                        <div className="text-2xl font-bold text-foreground">{formatCurrency(result.final * 225)} TL</div>
+                        <div className="mt-2 text-sm text-accent font-medium">
+                          Fark: +{formatCurrency((result.final - result.original) * 225)} TL
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* 4 Aylık Toplu Ödeme */}
-                <div
-                  className="result-highlight mt-4"
-                  style={{ background: "linear-gradient(135deg, hsl(45 90% 50% / 0.1), hsl(30 90% 50% / 0.1))" }}
-                >
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full text-xs font-medium text-amber-600 dark:text-amber-400 mb-3">
-                      <span>4 Aylık Toplu Ödeme</span>
-                    </div>
-                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
-                      {formatCurrency((result.final - result.original) * 225 * 4)} TL
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Aylık fark: {formatCurrency((result.final - result.original) * 225)} TL
-                    </div>
-                  </div>
-                </div>
-
-                {/* Second Period - 6 Month */}
-                <div
-                  className="result-highlight mt-4"
-                  style={{ background: "linear-gradient(135deg, hsl(160 60% 45% / 0.1), hsl(210 80% 45% / 0.1))" }}
-                >
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 rounded-full text-xs font-medium text-accent mb-3">
-                      <span>2. Dönem (6 Ay Sonra)</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-1">
-                      <Percent className="w-3.5 h-3.5" />
-                      <span>%13 Zam</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-1">Yeni Saat Ücretiniz</div>
-                    <div className="text-3xl font-bold text-accent">{formatCurrency(result.secondPeriodFinal)} TL</div>
-                    <div className="mt-2 text-sm text-primary font-medium">
-                      Dönem artışı: +{formatCurrency(result.secondPeriodIncrease)} TL
-                    </div>
-
-                    {/* Monthly Salary - Second Period */}
-                    <div className="mt-4 pt-4 border-t border-accent/20">
-                      <div className="text-sm text-muted-foreground mb-1">
-                        Tahmini Aylık Maaş <span className="text-xs">(×225 saat)</span>
+                  {/* 4 Aylık Toplu Ödeme */}
+                  <div
+                    className="result-highlight mt-4"
+                    style={{ background: "linear-gradient(135deg, hsl(45 90% 50% / 0.1), hsl(30 90% 50% / 0.1))" }}
+                  >
+                    <div className="text-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full text-xs font-medium text-amber-600 dark:text-amber-400 mb-3">
+                        <span>4 Aylık Toplu Ödeme</span>
                       </div>
-                      <div className="text-2xl font-bold text-foreground">
-                        {formatCurrency(result.secondPeriodFinal * 225)} TL
+                      <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+                        {formatCurrency((result.final - result.original) * 225 * 4)} TL
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
-                        Başlangıçtan toplam artış: %{result.secondPeriodTotalPercentage.toFixed(1)}
+                        Aylık fark: {formatCurrency((result.final - result.original) * 225)} TL
                       </div>
-                      <div className="mt-3 text-xs text-red-600 dark:text-red-400 font-medium">
-                        6 Aylık enflasyon %13'ten fazla çıkarsa tutarlar değişebilir!
+                    </div>
+                  </div>
+
+                  {/* Second Period - 6 Month */}
+                  <div
+                    className="result-highlight mt-4"
+                    style={{ background: "linear-gradient(135deg, hsl(160 60% 45% / 0.1), hsl(210 80% 45% / 0.1))" }}
+                  >
+                    <div className="text-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 rounded-full text-xs font-medium text-accent mb-3">
+                        <span>2. Dönem (6 Ay Sonra)</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-1">
+                        <Percent className="w-3.5 h-3.5" />
+                        <span>%16,29 Zam</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-1">Yeni Saat Ücretiniz</div>
+                      <div className="text-3xl font-bold text-accent">{formatCurrency(result.secondPeriodFinal)} TL</div>
+                      <div className="mt-2 text-sm text-primary font-medium">
+                        Dönem artışı: +{formatCurrency(result.secondPeriodIncrease)} TL
+                      </div>
+
+                      {/* Monthly Salary - Second Period */}
+                      <div className="mt-4 pt-4 border-t border-accent/20">
+                        <div className="text-2xl font-bold text-foreground">
+                          {formatCurrency(result.secondPeriodFinal * 225)} TL
+                        </div>
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          Başlangıçtan toplam artış: %{result.secondPeriodTotalPercentage.toFixed(1)}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Info Box */}
-            {!result && (
-              <div className="bg-secondary/30 rounded-xl p-4 text-sm text-muted-foreground">
-                <p className="mb-2">
-                  <strong>Hesaplama kuralları:</strong>
-                </p>
-                <ol className="list-decimal list-inside space-y-1 text-xs">
-                  <li>140 TL altındaki ücretlere 10 TL iyileştirme (max 140 TL)</li>
-                  <li>Tüm ücretlere %20 zam</li>
-                  <li>Seyyanen 17,61 TL ekleme</li>
-                </ol>
-              </div>
-            )}
+              {/* Info Box */}
+              {!result && (
+                <div className="bg-secondary/30 rounded-xl p-4 text-sm text-muted-foreground">
+                  <p className="mb-2">
+                    <strong>Hesaplama kuralları:</strong>
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs">
+                    <li>140 TL altındaki ücretlere 10 TL iyileştirme (max 140 TL)</li>
+                    <li>Tüm ücretlere %20 zam</li>
+                    <li>Seyyanen 17,61 TL ekleme</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Açıklanan Toplu İş Sözleşmesi şartlarına göre hesaplanmıştır.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+              <a
+                href="https://github.com/selo-ai/wage-rise-calculator"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Github className="w-4 h-4" />
+                GitHub
+              </a>
+              <a
+                href="https://x.com/SeloYapayzeka"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Twitter className="w-4 h-4" />
+                X (Twitter)
+              </a>
+            </div>
           </div>
-
-          {/* Footer */}
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Açıklanan Toplu İş Sözleşmesi şartlarına göre hesaplanmıştır.
-          </p>
-          <div className="text-center mt-4">
-            <a
-              href="https://github.com/selo-ai/wage-rise-calculator"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 rounded-lg text-sm font-medium transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              GitHub
-            </a>
-          </div>
-
-
         </div>
       </div>
     </>
